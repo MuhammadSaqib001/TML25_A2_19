@@ -38,7 +38,7 @@ self.fc = nn.Linear(512, 1024)  # project to target dimension
 | File                        | Description                             |
 | --------------------------- | --------------------------------------- |
 | `model_details.py`           | Launches session, gets seed & port      |
-| `stealing_query.py`          | Queries target API and saves embeddings |
+| `embedding_extraction_from_encoder_api.py`          | Queries target API and saves embeddings |
 | `train_encoder.py`           | Trains the surrogate model              |
 | `export_onnx.py`             | Converts PyTorch model to ONNX          |
 | `submit.py`                  | Submits ONNX model for evaluation       |
