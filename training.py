@@ -7,13 +7,15 @@ from typing import Tuple
 import numpy as np
 import torchvision.models as models
 
+BATCH_SIZE = 512 
+EPOCHS = 40
+
+
 class TaskDataset(Dataset):
     def __init__(self, transform=None):
-
         self.ids = []
         self.imgs = []
         self.labels = []
-
         self.transform = transform
 
     def __getitem__(self, index) -> Tuple[int, torch.Tensor, int]:
@@ -28,22 +30,6 @@ class TaskDataset(Dataset):
         return len(self.ids)
 
 
-with open("embeddings.pickle", "rb") as f:
-    data = pickle.load(f)
-indices = data["indices"]
-reps = torch.tensor(data["reps"], dtype=torch.float32)
-
-data_simple = torch.load("ModelStealingPub.pt", weights_only=False)
-data_aug = torch.load("ModelStealingPub_augmented.pt", weights_only=False)
-
-imgs = data_simple.imgs + data_aug.imgs
-
-transform = T.Compose([
-    T.ToTensor(),
-    T.Normalize([0.2980, 0.2962, 0.2987], [0.2886, 0.2875, 0.2889])
-])
-
-
 class StealDataset(Dataset):
     def __init__(self, indices, images, reps, transform=None):
         self.indices = indices
@@ -54,7 +40,6 @@ class StealDataset(Dataset):
             if len(img.shape) == 2:
                 # Convert grayscale to RGB by stacking
                 img = np.stack([img] * 3, axis=-1)
-
             self.images[i] = Image.fromarray(img)
         self.reps = reps
         self.transform = transform
@@ -65,11 +50,8 @@ class StealDataset(Dataset):
         img = self.images[self.indices[i]]  # PIL image
         if self.transform:
             img = self.transform(img)
-
         return img, self.reps[i]
 
-dataset = StealDataset(indices, imgs, reps, transform)
-dataloader = DataLoader(dataset, batch_size=256, shuffle=True)
 
 class StolenEncoder(nn.Module):
     def __init__(self):
@@ -86,11 +68,31 @@ class StolenEncoder(nn.Module):
         x = self.fc(x)
         return x
 
+
+# Training script starts here 
+with open("embeddings.pickle", "rb") as f:
+    data = pickle.load(f)
+indices = data["indices"]
+reps = torch.tensor(data["reps"], dtype=torch.float32)
+
+data_simple = torch.load("ModelStealingPub.pt", weights_only=False)
+data_aug = torch.load("ModelStealingPub_augmented.pt", weights_only=False)
+
+imgs = data_simple.imgs + data_aug.imgs
+
+transform = T.Compose([
+    T.ToTensor(),
+    T.Normalize([0.2980, 0.2962, 0.2987], [0.2886, 0.2875, 0.2889])
+])
+
+dataset = StealDataset(indices, imgs, reps, transform)
+dataloader = DataLoader(dataset, batch_size=BATCH_SIZE, shuffle=True)
+
 model = StolenEncoder().to("cuda" if torch.cuda.is_available() else "cpu")
 optimizer = optim.Adam(model.parameters(), lr=1e-3)
 loss_fn = nn.MSELoss()
 
-for epoch in range(40):
+for epoch in range(EPOCHS):
     model.train()
     total = 0
     for x,y in dataloader:
