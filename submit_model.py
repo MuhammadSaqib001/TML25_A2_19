@@ -3,10 +3,9 @@ import onnxruntime as ort
 import numpy as np
 import requests
 
-
 SEED = "18632002"
 TOKEN = "54614611"
-path = 'stolen_encoder_2.onnx'
+path = 'stolen_encoder.onnx'
 
 # (these are being ran on the eval endpoint for every submission)
 with open(path, "rb") as f:
