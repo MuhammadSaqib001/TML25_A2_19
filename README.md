@@ -5,23 +5,33 @@ The attack follows a query-based workflow: collect embeddings from the victim mo
 
 ## Workflow Overview
 
-### Session Setup
+### 1. Session Setup
 - Retrieve your seed and port using the provided API token.
 
-### Dataset Preparation
+### 2. Dataset Preparation 
 - Load the base dataset (`ModelStealingPub.pt`).
 - Apply one random augmentation per image to increase diversity and bypass server-side defenses.
+- Storing augmented samples as (`ModelStealingPub_augmented.pt`).
 
-### Embedding Query
-- Query the target encoder in batches of 1000.
+### 3. Embedding Query (Target Model)
+- Query the target encoder using  (`ModelStealingPub.pt`) and (`ModelStealingPub_augmented.pt`) in batches of 1000.
 - Base64-encode images and send to the API.
-- Store 1024-dim embeddings in `embeddings.pickle`.
+- Store 1024-dim embeddings in `embeddings.pickle` for all the input images.
 
-### Surrogate Model Training
+### 4. Surrogate Model Training
 - Use a modified ResNet-18 to predict embeddings from images.
 - Train using MSE loss to match target outputs.
+The surrogate (stolen) model we used is a modified ResNet-18:
 
-### Export & Submit
+```python
+base = models.resnet18(weights=None)
+base.conv1 = nn.Conv2d(3, 64, kernel_size=3, stride=1, padding=1, bias=False)  # remove initial large conv
+base.maxpool = nn.Identity()  # remove unnecessary pooling
+self.encoder = nn.Sequential(*list(base.children())[:-1])  # remove classifier
+self.fc = nn.Linear(512, 1024)  # project to target dimension
+```
+
+### 5. Export & Submit
 - Convert the trained model to ONNX.
 - Submit the file to the evaluation server with your token and seed.
 
@@ -46,4 +56,3 @@ Key ideas from:
 - Han et al., *"On Defenses Against Model Stealing via B4B"*, NeurIPS 2023
 - Chen et al., *"Encoder Stealing via Augmentations"*
 - Sha et al., *"Copycat Networks"*
-
