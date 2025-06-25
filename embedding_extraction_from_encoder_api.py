@@ -12,7 +12,6 @@ import time
 import torchvision.transforms as T
 import torchvision.transforms.functional as TF
 
-
 token = "54614611"
 chunk_size = 1000
 max_queries = 100000
