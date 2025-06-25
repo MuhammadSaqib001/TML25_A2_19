@@ -1,5 +1,5 @@
 # ======================================
-# stealing_query.py (store representations)
+# embedding_extraction_from_encoder_api.py (store representations)
 # ======================================
 import os, io, sys, json, base64, pickle, requests
 import numpy as np
@@ -40,9 +40,6 @@ class TaskDataset(Dataset):
 
     def __len__(self):
         return len(self.ids)
-
-class AugmentedData:
-    pass
 
 # Load dataset
 data_simple = torch.load("ModelStealingPub.pt", weights_only=False)
