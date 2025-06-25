@@ -7,7 +7,6 @@ from typing import Tuple
 import numpy as np
 import torchvision.models as models
 
-
 class TaskDataset(Dataset):
     def __init__(self, transform=None):
 
